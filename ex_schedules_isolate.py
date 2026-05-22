@@ -97,8 +97,25 @@ st.title('🏢 BIM Explorer')
 st.caption('Row click = isolate (ghost 10%) · Checkbox = select · '
            'No-op = restore view')
 
+def _dedupe_columns(df):
+    """AG Grid requires unique column names. Revit schedules can have
+    legitimate duplicates ('Material' for door + frame in a door
+    schedule). Append ' (2)', ' (3)' etc. to subsequent occurrences."""
+    seen = {}
+    new_cols = []
+    for c in df.columns:
+        if c in seen:
+            seen[c] += 1
+            new_cols.append(f"{c} ({seen[c]})")
+        else:
+            seen[c] = 1
+            new_cols.append(c)
+    df.columns = new_cols
+    return df
+
+
 sched_name = st.selectbox('Schedule', list_schedules())
-df = get_df(sched_name).copy()
+df = _dedupe_columns(get_df(sched_name).copy())
 df.insert(1, '☑', False)            # colonne checkbox éditable
 
 # AG Grid : seul widget qui expose row-selection + cell-edit

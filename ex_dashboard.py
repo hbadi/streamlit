@@ -475,13 +475,33 @@ st.subheader('📋 Schedules — pick rows to isolate in Revit')
 st.caption('💡 Click rows to isolate · use Restore view (sidebar) to '
            'clear isolation AND grid selection')
 schedules = _safe_call(list_schedules, fallback=[])
+def _dedupe_columns(df):
+    """AG Grid requires unique column names. Revit schedules can have
+    legitimate duplicates ('Material' for door + 'Material' for frame
+    in a door schedule). Append ' (2)', ' (3)' etc. to subsequent
+    occurrences so AG Grid is happy. Pandas itself accepts duplicates
+    natively (per the to_df v0.2 contract) — this dedup is purely a
+    downstream-renderer requirement."""
+    seen = {}
+    new_cols = []
+    for c in df.columns:
+        if c in seen:
+            seen[c] += 1
+            new_cols.append(f"{c} ({seen[c]})")
+        else:
+            seen[c] = 1
+            new_cols.append(c)
+    df.columns = new_cols
+    return df
+
+
 if schedules:
     sn = st.selectbox('Schedule', schedules, key='sched_pick')
     sched_df = _safe_call(get_schedule_df, sn, fallback=pd.DataFrame())
     if sched_df is None or sched_df.empty:
         st.warning(f"Couldn't fetch schedule `{sn}`.")
         st.stop()
-    sched_df = sched_df.copy()
+    sched_df = _dedupe_columns(sched_df.copy())
 
     gb = GridOptionsBuilder.from_dataframe(sched_df)
     gb.configure_selection('multiple', use_checkbox=False)
