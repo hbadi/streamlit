@@ -131,11 +131,18 @@ gb.configure_column('☑', editable=True,
                     cellEditor='agCheckboxCellEditor',
                     cellRenderer='agCheckboxCellRenderer',
                     headerName='Sel.', width=70)
-gb.configure_column('id', editable=False, width=90, headerName='id')
+gb.configure_column('id', editable=False, width=90)
+# IMPORTANT : only re-configure columns when we OVERRIDE the label
+# (genuine dup case). Re-configuring identity cols wipes the value
+# formatter that from_dataframe set up for numeric dtypes →
+# empty cells in the UI.
 for c in df.columns:
-    if c not in ('☑', 'id'):
-        gb.configure_column(c, editable=False,
-                            headerName=label_map.get(c, c))
+    if c in ('☑', 'id'):
+        continue
+    label = label_map.get(c, c)
+    if label == c:
+        continue   # no override needed
+    gb.configure_column(c, editable=False, headerName=label)
 opts = gb.build()
 
 resp = AgGrid(

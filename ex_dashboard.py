@@ -510,12 +510,17 @@ if schedules:
     gb = GridOptionsBuilder.from_dataframe(sched_df)
     gb.configure_selection('multiple', use_checkbox=False)
     gb.configure_column('id', editable=False, width=90)
+    # IMPORTANT : only re-configure columns when we actually OVERRIDE
+    # something. Re-configuring identity cols (label == field id)
+    # wipes the value formatter that from_dataframe set up for numeric
+    # dtypes — making numeric cells appear empty in the UI.
     for c in sched_df.columns:
-        if c != 'id':
-            # headerName = original Revit display label (may duplicate
-            # across columns — exactly like in Revit's Schedule UI)
-            gb.configure_column(c, editable=False,
-                                headerName=_label_map.get(c, c))
+        if c == 'id':
+            continue
+        label = _label_map.get(c, c)
+        if label == c:
+            continue   # no override needed, leave from_dataframe defaults
+        gb.configure_column(c, editable=False, headerName=label)
     opts = gb.build()
 
     # Key rotates on Restore — recreates the widget = wipes selection.
