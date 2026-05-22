@@ -1,0 +1,7 @@
+streamlit>=1.36
+streamlit-aggrid>=1.2
+plotly>=5.0
+pandas>=2.0
+
+# Also required (install separately) :
+#   revit       — the live Revit IPC package (private, see main project)
