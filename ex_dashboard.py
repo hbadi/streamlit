@@ -35,7 +35,8 @@ from datetime import datetime
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from st_aggrid import (AgGrid, ColumnsAutoSizeMode, GridOptionsBuilder,
+                       GridUpdateMode)
 
 import revit
 from revit.remote._client import IpcError
@@ -528,7 +529,9 @@ if schedules:
     resp = AgGrid(
         sched_df, gridOptions=opts,
         update_mode=GridUpdateMode.SELECTION_CHANGED,
-        height=340, fit_columns_on_grid_load=True, key=grid_key)
+        height=340,
+        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+        key=grid_key)
 
     sel_rows = resp.selected_rows
     if (not st.session_state['_just_restored']

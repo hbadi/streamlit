@@ -32,7 +32,8 @@ Architecture :
 import streamlit as st
 import revit
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from st_aggrid import (AgGrid, ColumnsAutoSizeMode, GridOptionsBuilder,
+                       GridUpdateMode)
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -150,7 +151,7 @@ resp = AgGrid(
     gridOptions=opts,
     update_mode=GridUpdateMode.SELECTION_CHANGED | GridUpdateMode.VALUE_CHANGED,
     height=460,
-    fit_columns_on_grid_load=True,
+    columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
     key='grid',
 )
 
