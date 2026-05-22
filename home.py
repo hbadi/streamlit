@@ -31,9 +31,14 @@ st.set_page_config(
     initial_sidebar_state='expanded',
 )
 
-pg = st.navigation([
-    st.Page('ex_dashboard.py',         title='BIM Explorer',      icon='📊'),
-    st.Page('ex_health_check.py',      title='Model Health',      icon='🩺'),
-    st.Page('ex_schedules_isolate.py', title='Schedules Isolate', icon='📋'),
-])
+pg = st.navigation({
+    'Demo': [
+        st.Page('ex_dashboard.py',         title='BIM Explorer', icon='📊'),
+        st.Page('ex_health_check.py',      title='Model Health', icon='🩺'),
+    ],
+    'Tools': [
+        st.Page('ex_schedules_isolate.py', title='Schedules Isolate',
+                icon='📋'),
+    ],
+})
 pg.run()
