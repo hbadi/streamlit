@@ -35,8 +35,7 @@ from datetime import datetime
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from st_aggrid import (AgGrid, ColumnsAutoSizeMode, GridOptionsBuilder,
-                       GridUpdateMode)
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 import revit
 from revit.remote._client import IpcError
@@ -510,6 +509,11 @@ if schedules:
 
     gb = GridOptionsBuilder.from_dataframe(sched_df)
     gb.configure_selection('multiple', use_checkbox=False)
+    # Auto-size every column to its widest cell (NOT to fit grid width).
+    # streamlit-aggrid 1.2+ : `columns_auto_size_mode=…` is silently
+    # ignored ; the real mechanism is gridOptions["autoSizeStrategy"].
+    gb.configure_grid_options(
+        autoSizeStrategy={'type': 'fitCellContents'})
     gb.configure_column('id', editable=False, width=90)
     # IMPORTANT : only re-configure columns when we actually OVERRIDE
     # something. Re-configuring identity cols (label == field id)
@@ -529,9 +533,7 @@ if schedules:
     resp = AgGrid(
         sched_df, gridOptions=opts,
         update_mode=GridUpdateMode.SELECTION_CHANGED,
-        height=340,
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
-        key=grid_key)
+        height=340, key=grid_key)
 
     sel_rows = resp.selected_rows
     if (not st.session_state['_just_restored']

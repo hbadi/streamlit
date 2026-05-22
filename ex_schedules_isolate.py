@@ -32,8 +32,7 @@ Architecture :
 import streamlit as st
 import revit
 import pandas as pd
-from st_aggrid import (AgGrid, ColumnsAutoSizeMode, GridOptionsBuilder,
-                       GridUpdateMode)
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -128,6 +127,11 @@ label_map['☑'] = 'Sel.'
 # indépendamment dans un même tableau.
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_selection('multiple', use_checkbox=False)
+# Auto-size every column to widest cell (real API of streamlit-aggrid
+# 1.2+ : gridOptions["autoSizeStrategy"], the columns_auto_size_mode
+# kwarg is silently ignored).
+gb.configure_grid_options(
+    autoSizeStrategy={'type': 'fitCellContents'})
 gb.configure_column('☑', editable=True,
                     cellEditor='agCheckboxCellEditor',
                     cellRenderer='agCheckboxCellRenderer',
@@ -151,7 +155,6 @@ resp = AgGrid(
     gridOptions=opts,
     update_mode=GridUpdateMode.SELECTION_CHANGED | GridUpdateMode.VALUE_CHANGED,
     height=460,
-    columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
     key='grid',
 )
 
