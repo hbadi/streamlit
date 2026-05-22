@@ -475,24 +475,28 @@ st.subheader('📋 Schedules — pick rows to isolate in Revit')
 st.caption('💡 Click rows to isolate · use Restore view (sidebar) to '
            'clear isolation AND grid selection')
 schedules = _safe_call(list_schedules, fallback=[])
-def _dedupe_columns(df):
-    """AG Grid requires unique column names. Revit schedules can have
-    legitimate duplicates ('Material' for door + 'Material' for frame
-    in a door schedule). Append ' (2)', ' (3)' etc. to subsequent
-    occurrences so AG Grid is happy. Pandas itself accepts duplicates
-    natively (per the to_df v0.2 contract) — this dedup is purely a
-    downstream-renderer requirement."""
-    seen = {}
-    new_cols = []
+def _dedupe_with_label_map(df):
+    """Revit schedules can have duplicate DISPLAY headings ('Material'
+    for door + 'Material' for frame). Pandas accepts this (per to_df
+    v0.2 contract) but AG Grid needs unique column ids.
+
+    Solution : keep WYSIWYG by giving AG Grid unique field ids
+    (suffixed ' (2)', ' (3)' etc.) but configure each column's
+    headerName back to the ORIGINAL Revit label. Internal id != UI
+    label = AG Grid is happy, user sees the original Revit headings."""
+    seen, new_cols, label_map = {}, [], {}
     for c in df.columns:
         if c in seen:
             seen[c] += 1
-            new_cols.append(f"{c} ({seen[c]})")
+            unique_id = f"{c} ({seen[c]})"
+            new_cols.append(unique_id)
+            label_map[unique_id] = c       # display the ORIGINAL label
         else:
             seen[c] = 1
             new_cols.append(c)
+            label_map[c] = c
     df.columns = new_cols
-    return df
+    return df, label_map
 
 
 if schedules:
@@ -501,14 +505,17 @@ if schedules:
     if sched_df is None or sched_df.empty:
         st.warning(f"Couldn't fetch schedule `{sn}`.")
         st.stop()
-    sched_df = _dedupe_columns(sched_df.copy())
+    sched_df, _label_map = _dedupe_with_label_map(sched_df.copy())
 
     gb = GridOptionsBuilder.from_dataframe(sched_df)
     gb.configure_selection('multiple', use_checkbox=False)
     gb.configure_column('id', editable=False, width=90)
     for c in sched_df.columns:
         if c != 'id':
-            gb.configure_column(c, editable=False)
+            # headerName = original Revit display label (may duplicate
+            # across columns — exactly like in Revit's Schedule UI)
+            gb.configure_column(c, editable=False,
+                                headerName=_label_map.get(c, c))
     opts = gb.build()
 
     # Key rotates on Restore — recreates the widget = wipes selection.

@@ -97,26 +97,31 @@ st.title('🏢 BIM Explorer')
 st.caption('Row click = isolate (ghost 10%) · Checkbox = select · '
            'No-op = restore view')
 
-def _dedupe_columns(df):
-    """AG Grid requires unique column names. Revit schedules can have
-    legitimate duplicates ('Material' for door + frame in a door
-    schedule). Append ' (2)', ' (3)' etc. to subsequent occurrences."""
-    seen = {}
-    new_cols = []
+def _dedupe_with_label_map(df):
+    """AG Grid needs unique column ids ; Revit schedules can dup
+    display headings ('Material' for door + frame). We suffix
+    duplicate ids with ' (2)' etc. internally, but preserve the
+    ORIGINAL Revit label in a side map so AG Grid's headerName
+    config can re-display the WYSIWYG label."""
+    seen, new_cols, label_map = {}, [], {}
     for c in df.columns:
         if c in seen:
             seen[c] += 1
-            new_cols.append(f"{c} ({seen[c]})")
+            unique_id = f"{c} ({seen[c]})"
+            new_cols.append(unique_id)
+            label_map[unique_id] = c
         else:
             seen[c] = 1
             new_cols.append(c)
+            label_map[c] = c
     df.columns = new_cols
-    return df
+    return df, label_map
 
 
 sched_name = st.selectbox('Schedule', list_schedules())
-df = _dedupe_columns(get_df(sched_name).copy())
+df, label_map = _dedupe_with_label_map(get_df(sched_name).copy())
 df.insert(1, '☑', False)            # colonne checkbox éditable
+label_map['☑'] = 'Sel.'
 
 # AG Grid : seul widget qui expose row-selection + cell-edit
 # indépendamment dans un même tableau.
@@ -125,11 +130,12 @@ gb.configure_selection('multiple', use_checkbox=False)
 gb.configure_column('☑', editable=True,
                     cellEditor='agCheckboxCellEditor',
                     cellRenderer='agCheckboxCellRenderer',
-                    width=70)
-gb.configure_column('id', editable=False, width=90)
+                    headerName='Sel.', width=70)
+gb.configure_column('id', editable=False, width=90, headerName='id')
 for c in df.columns:
     if c not in ('☑', 'id'):
-        gb.configure_column(c, editable=False)
+        gb.configure_column(c, editable=False,
+                            headerName=label_map.get(c, c))
 opts = gb.build()
 
 resp = AgGrid(
