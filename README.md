@@ -44,13 +44,23 @@ be running locally with the RevitShell IPC server active.
 
 ## Run
 
+**Recommended — multi-demo launcher** (single URL, sidebar navigation
+between all 3 demos, shared IPC connection) :
+
+```bash
+streamlit run home.py
+```
+
+Opens `http://localhost:8501` with a sidebar menu to switch between
+demos.
+
+**Single demo** :
+
 ```bash
 streamlit run ex_dashboard.py
 streamlit run ex_health_check.py
 streamlit run ex_schedules_isolate.py
 ```
-
-Each demo opens at `http://localhost:8501` in your browser.
 
 ## Architecture
 
